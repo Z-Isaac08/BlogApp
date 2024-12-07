@@ -43,6 +43,18 @@ async def get_post(post_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Post inexistant")
     return post
 
+@app.put('/posts/{post_id}', response_model=PostOut, status_code=status.HTTP_200_OK)
+async def update_post(post_id: int, updated_post: PostCreate, db: Session = Depends(get_db)):
+    post = db.query(models.Post).filter(models.Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post inexistant")
+    for key, value in updated_post.model_dump().items():
+        setattr(post, key, value)
+    db.commit()
+    db.refresh(post)  
+    return post
+
+
 @app.get('/posts/', status_code=status.HTTP_200_OK)
 async def get_all_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
